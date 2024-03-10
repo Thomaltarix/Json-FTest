@@ -270,8 +270,8 @@ def printUsage(exitCode):
         \n\tOptions:\n\
         \t--help, -h: Display this help\n\
         \t--verbose, -v: Display the result of each test\n\
-        \t--delete, -d: Delete the generated .xml file at the end\n\
-        \n\tTest file:\n\
+        \t--delete, -d: Do not generate the .xml file and delete it if it exists\n\
+        \n\tTest files:\n\
         \tThe test files must be a .json file\n\
         \tThe test files must contain an array of tests\n\
         \tEach test must contain the following keys:\n\
