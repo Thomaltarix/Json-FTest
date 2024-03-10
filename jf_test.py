@@ -185,6 +185,21 @@ def generateFile(result):
     test_suite = [TestSuite("nanotekspice", test_cases)]
     with open("f_test.xml", "w") as f:
         TestSuite.to_file(f, test_suite)
+def createTest(test):
+    """
+    Creates a Test object from a dictionary
+    """
+
+    return Test(
+        test["testName"],
+        test["binaryPath"],
+        test["fileInput"],
+        test["arguments"],
+        test["commandLineInputs"],
+        test["expectedReturnCode"],
+        test["expectedStdoutOutput"],
+        test["expectedStderrOutput"]
+    )
 
 def parseTest(arguments, filePath):
     """
