@@ -131,8 +131,7 @@ def setResult(test):
             test.result = f"Test \"{test.testName}\" passed"
             return State.OK
 
-
-def runTest(test, print_details):
+def runTest(test):
     """
     Runs a given command with given arguments and returns the result
     The function will also print the result if --verbose or -v is on
@@ -144,28 +143,33 @@ def runTest(test, print_details):
     ! WARNING !
     """
 
-    result = ""
-    command = test["binaryPath"]
-    for arg in test["arguments"]:
-        command += " " + arg
-    if test["fileInput"] != "":
-        process = Popen(command,
-                        cwd=os.getcwd(),
-                        stdout=PIPE,
-                        stderr=PIPE,
-                        stdin=PIPE,
-                        universal_newlines=True)
+    commandLine = [test.binaryPath]
+    if test.fileInput:
+        commandLine.append(test.fileInput)
+    if test.arguments:
+        commandLine.extend(test.arguments)
+    process = Popen(commandLine,
+                    cwd=os.getcwd(),
+                    stdout=PIPE,
+                    stderr=PIPE,
+                    stdin=PIPE,
+                    universal_newlines=True)
     while process.poll() is None:
-        for command in test["commandLineInputs"]:
-            process.stdin.write(command + "\n")
+        for clInput in test.commandLineInputs:
+            if clInput[len(clInput) - 1] != '\n':
+                clInput += '\n'
+            process.stdin.write(clInput)
         process.stdin.flush()
         child_output = process.stdout.readline()
-        result += child_output
+        test.stdout += child_output
+        child_error = process.stderr.readline()
+        test.stderr += child_error
 
     process.stdin.close()
     process.stdout.close()
-    print(child_output)
-    return printResult(test, result, process.returncode, print_details)
+    process.stderr.close()
+    test.returnCode = process.returncode
+    setResult(test)
 
 def generateFile(result):
     """
@@ -282,8 +286,8 @@ def main():
         printUsage(arguments.exitCode)
     if arguments.error:
         printError(arguments.errorString, arguments.exitCode)
-        | Passing: {result.count(State.OK)}\
-        | Failing: {result.count(State.KO)}\
+    for i in range(len(arguments.tests)):
+        runTest(arguments.tests[i])
     (koTests, crashedTests) = printResults(arguments)
     generateFile(result)
     return 0
