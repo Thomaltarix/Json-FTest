@@ -78,6 +78,19 @@ options = [
     ("--delete", Arguments.setDelete),
     ("-d", Arguments.setDelete),
 ]
+
+# Array that define what a test should contain
+testKeys = [
+    "testName",
+    "binaryPath",
+    "fileInput",
+    "arguments",
+    "commandLineInputs",
+    "expectedReturnCode",
+    "expectedStdoutOutput",
+    "expectedStderrOutput"
+]
+
     else:
         if return_code != expectedReturnCode:
             print(
