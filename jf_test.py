@@ -155,11 +155,7 @@ def generateFile(result):
 
 def handleArgsErrors():
     """
-    Handles the errors of the arguments
-    The function will return 0 if the user asked for help
-    The function will return 1 if the user used the --verbose, -v or no flag
-    The function will return 3 if the user used the --delete or -d flag
-    The function will return 84 if the user used an unknown flag
+    Prints an error message
     """
     if len(argv) > 1:
         for i in range (1, len(argv)):
@@ -178,11 +174,6 @@ def handleArgsErrors():
 def main():
     """
     Main function of the script
-    The function will run the tests and print the results
-    The function will generate a .xml file with the results of the tests
-    The function will return 0 if everything went well
-    The function will return 0 if the user used the --help or -h flag
-    The function will return 84 if the user used an unknown flag
     """
 
     test_nb = len(tests)
