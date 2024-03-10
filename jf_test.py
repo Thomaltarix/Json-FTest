@@ -62,14 +62,24 @@ class Arguments:
         self.tests = []
         self.errorString = ""
 
-    if return_code == 139:
-        print(
-            f"Test \"{test['testName']}\" failed: the program crashed with signal {return_code}")
-        return State.CRASH
-    if result != expectedStdoutOutput:
-        print(
-            f"Test \"{test['testName']}\" failed: expected output is \n{expectedStdoutOutput}\nactual output is \n{result}\n")
-        return State.KO
+    def setHelp(self):
+        self.help = True
+        self.exitCode = Error.HELP
+
+    def setVerbose(self):
+        self.verbose = True
+
+    def setDelete(self):
+        self.delete = True
+
+    def setError(self, errorString):
+        self.error = True
+        self.errorString = errorString
+        self.exitCode = Error.ERROR
+
+    def addTest(self, test):
+        self.tests.append(test)
+
 options = [
     ("--help", Arguments.setHelp),
     ("-h", Arguments.setHelp),
