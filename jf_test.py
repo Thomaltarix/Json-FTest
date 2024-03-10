@@ -163,40 +163,81 @@ def generateFile(result):
     with open("f_test.xml", "w") as f:
         TestSuite.to_file(f, test_suite)
 
-def handleArgsErrors():
+def parseTest(arguments, filePath):
+    """
+    Parses the test file
+    """
+
+    try:
+        with open(filePath, "r") as file:
+            data = json.load(file)
+            for test in data:
+                arguments.addTest(createTest(test))
+    except FileNotFoundError:
+        arguments.setError(f"File {filePath} not found")
+
+def parseArgs(arguments, argv):
+    """
+    Parses the arguments of the program
+    """
+
+    for i in range(1, len(argv)):
+        if arguments.error:
+            return
+        found = False
+        for option in options:
+            if argv[i] == option[0]:
+                option[1](arguments)
+                found = True
+                break
+        if not found:
+            parseTest(arguments, argv[i])
+
+def printUsage(exitCode):
+    """
+    Prints the usage of the script
+    """
+
+    print("Usage:\n\
+        ./jf_test.py [options] [test_file.json]\n\
+        \n\tOptions:\n\
+        \t--help, -h: Display this help\n\
+        \t--verbose, -v: Display the result of each test\n\
+        \t--delete, -d: Delete the generated .xml file at the end\n\
+        \n\tTest file:\n\
+        \tThe test files must be a .json file\n\
+        \tThe test files must contain an array of tests\n\
+        \tEach test must contain the following keys:\n\
+        \t\ttestName: The name of the test\n\
+        \t\tbinaryPath: The path to the binary to test\n\
+        \t\tfileInput: The path to the file to use as input\n\
+        \t\targuments: An array of arguments to pass to the binary\n\
+        \t\tcommandLineInputs: An array of command line inputs\n\
+        \t\texpectedReturnCode: The expected return code of the binary\n\
+        \t\texpectedStdoutOutput: The expected stdout output of the binary\n\
+        \t\texpectedStderrOutput: The expected stderr output of the binary")
+    exit(exitCode.value)
+
+def printError(errorString, exitCode):
     """
     Prints an error message
     """
-    if len(argv) > 1:
-        for i in range (1, len(argv)):
-            if (argv[i] == "--delete" or argv[i] == "-d"):
-                return Error.DELETE
-            if (argv[i] == "--help" or argv[i] == "-h"):
-                print("Usage: ./f_test.py [--verbose|-v]")
-                return Error.HELP
-            elif (argv[i] == "--verbose" or argv[i] == "-v"):
-                return Error.VERBOSE
-            else:
-                print("Usage: ./f_test.py [--verbose|-v]")
-                return Error.UNKNOWN
-    return Error.NONE
+
+    print(f"Error: {errorString}")
+    exit(exitCode.value)
 
 def main():
     """
     Main function of the script
     """
 
-    test_nb = len(tests)
-    result = []
-    print_details = handleArgsErrors()
-    if print_details == Error.DELETE:
-        os.remove("f_test.xml")
-        return 0
+    arguments = Arguments()
+    parseArgs(arguments, argv)
 
-    if print_details != Error.VERBOSE and print_details != Error.NONE and print_details != Error.DELETE:
-        return print_details.value
-    result = [runTest(test, print_details) for test in tests]
-    print(f"[====] Synthesis: Tested: {test_nb}\
+    if arguments.help:
+        printUsage(arguments.exitCode)
+    if arguments.error:
+        printError(arguments.errorString, arguments.exitCode)
         | Passing: {result.count(State.OK)}\
         | Failing: {result.count(State.KO)}\
         | Crashing: {result.count(State.CRASH)}")
