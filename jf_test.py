@@ -307,7 +307,9 @@ def main():
         runTest(arguments.tests[i])
     (koTests, crashedTests) = printResults(arguments)
     generateFile(arguments)
-    return 0
+    if arguments.delete:
+        if os.path.exists("jf_test.xml"):
+            os.remove("jf_test.xml")
     if koTests > 0 or crashedTests > 0:
         exit(Error.ERROR.value)
     exit(0)
