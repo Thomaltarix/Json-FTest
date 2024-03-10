@@ -21,11 +21,13 @@ class Error(Enum):
     """
     Enum to represent the state of the program
     """
+
     HELP = 0
     VERBOSE = 1
-    NONE = 2
-    DELETE = 3
-    UNKNOWN = 84
+    DELETE = 2
+    NONE = 3
+    ERROR = 84
+
 class Test:
     """
     Class to represent a test
