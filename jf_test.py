@@ -70,6 +70,14 @@ class Arguments:
         print(
             f"Test \"{test['testName']}\" failed: expected output is \n{expectedStdoutOutput}\nactual output is \n{result}\n")
         return State.KO
+options = [
+    ("--help", Arguments.setHelp),
+    ("-h", Arguments.setHelp),
+    ("--verbose", Arguments.setVerbose),
+    ("-v", Arguments.setVerbose),
+    ("--delete", Arguments.setDelete),
+    ("-d", Arguments.setDelete),
+]
     else:
         if return_code != expectedReturnCode:
             print(
