@@ -2,11 +2,10 @@
 
 from subprocess import Popen, PIPE
 from enum import Enum
-import os
 from sys import argv
 from junit_xml import TestSuite, TestCase
-
-# Define the tests
+import os
+import json
 
 class State(Enum):
     """
@@ -80,6 +79,7 @@ class Arguments:
     def addTest(self, test):
         self.tests.append(test)
 
+# Array that define every Arguments class function to call for earch options
 options = [
     ("--help", Arguments.setHelp),
     ("-h", Arguments.setHelp),
@@ -129,7 +129,6 @@ def setResult(test):
         else:
             test.state = State.OK
             test.result = f"Test \"{test.testName}\" passed"
-            return State.OK
 
 def runTest(test):
     """
