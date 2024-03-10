@@ -45,16 +45,20 @@ class Test:
         self.result = ""
         self.returnCode = 0
         self.state = State.OK
+
+class Arguments:
     """
-    Analyzes the result of a test and prints it (only if --verbose or -v is on)
-    The function returns the state of the test (OK, KO, CRASH)
-    If the test failed, the function will anyways print the result
-    All the error codes are not implemented yet, you can add them if you want
+    Class to represent the arguments of the program
     """
 
-    expectedStdoutOutput = test["expectedStdoutOutput"]
-    exceptedStderrOutput = test["expectedStderrOutput"]
-    expectedReturnCode = test["expectedReturnCode"]
+    def __init__(self):
+        self.help = False
+        self.verbose = False
+        self.delete = False
+        self.error = False
+        self.exitCode = 0
+        self.tests = []
+        self.errorString = ""
 
     if return_code == 139:
         print(
