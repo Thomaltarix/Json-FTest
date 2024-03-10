@@ -7,18 +7,6 @@ from sys import argv
 from junit_xml import TestSuite, TestCase
 
 # Define the tests
-tests = [
-    {
-        "testName": "oui",
-        "binaryPath": "echo",
-        "fileInput": "",
-        "arguments": "Hello world",
-        "commandLineInputs": [""],
-        "expectedReturnCode": 0,
-        "expectedStdoutOutput": "",
-        "expectedStderrOutput": "",
-    },
-]
 
 class State(Enum):
     """
