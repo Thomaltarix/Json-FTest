@@ -26,8 +26,25 @@ class Error(Enum):
     NONE = 2
     DELETE = 3
     UNKNOWN = 84
+class Test:
+    """
+    Class to represent a test
+    """
 
-def printResult(test, result, return_code, print_details):
+    def __init__(self, testName, binaryPath, fileInput, arguments, commandLineInputs, expectedReturnCode, expectedStdoutOutput, expectedStderrOutput):
+        self.testName = testName
+        self.binaryPath = binaryPath
+        self.fileInput = fileInput
+        self.arguments = arguments
+        self.commandLineInputs = commandLineInputs
+        self.expectedReturnCode = expectedReturnCode
+        self.expectedStdoutOutput = expectedStdoutOutput
+        self.expectedStderrOutput = expectedStderrOutput
+        self.stdout = ""
+        self.stderr = ""
+        self.result = ""
+        self.returnCode = 0
+        self.state = State.OK
     """
     Analyzes the result of a test and prints it (only if --verbose or -v is on)
     The function returns the state of the test (OK, KO, CRASH)
