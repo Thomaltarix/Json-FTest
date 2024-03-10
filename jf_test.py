@@ -179,6 +179,8 @@ def generateFile(arguments):
     The script do not handle the elapsed time of the tests
     """
 
+    if arguments.delete:
+        return
     testCases = []
     for i in range(len(arguments.tests)):
         testCases.append(TestCase(arguments.tests[i].testName, classname="",
