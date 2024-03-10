@@ -101,14 +101,34 @@ testKeys = [
     "expectedStderrOutput"
 ]
 
+def setResult(test):
+    """
+    Sets the result of a test
+    The result contains the state of the test and the result of the test
+    """
+
+    if test.stdout == " Hello World\n":
+        print("test")
+
+    if test.returnCode == 139:
+        test.state = State.CRASH
+        test.result = f"Test \"{test.testName}\" failed: the program crashed with signal {test.returnCode}"
+    elif test.stdout != test.expectedStdoutOutput:
+        test.state = State.KO
+        test.result = f"Test \"{test.testName}\" failed: Expected output is:\
+        \n{test.expectedStdoutOutput}\nActual output is: \n{test.stdout}"
+    elif test.stderr != test.expectedStderrOutput:
+        test.state = State.KO
+        test.result = f"Test \"{test.testName}\" failed: Expected error output is:\
+        \n{test.expectedStderrOutput}\nActual error output is: \n{test.stderr}"
     else:
-        if return_code != expectedReturnCode:
-            print(
-                f"Test \"{test['testName']}\" failed: expected return code is {expectedReturnCode}, actual return code is {return_code}")
-            return State.KO
+        if test.returnCode != test.expectedReturnCode:
+            test.state = State.KO
+            test.result = f"Test \"{test.testName}\" failed: Expected return code is:\
+            {test.expectedReturnCode}, Actual return code is: {test.returnCode}"
         else:
-            if print_details == Error.VERBOSE:
-                print(f"Test '{test['testName']}' passed")
+            test.state = State.OK
+            test.result = f"Test \"{test.testName}\" passed"
             return State.OK
 
 
@@ -193,6 +213,30 @@ def parseArgs(arguments, argv):
         if not found:
             parseTest(arguments, argv[i])
 
+def printResults(arguments):
+    """
+    Prints the results of the tests
+    """
+
+    koTests, crashTests, okTests = 0, 0, 0
+
+    for test in arguments.tests:
+        if test.state == State.KO:
+            koTests += 1
+        elif test.state == State.CRASH:
+            crashTests += 1
+
+    if koTests > 0 or crashTests > 0:
+        arguments.exitCode = Error.ERROR
+    for test in arguments.tests:
+        if test.state == State.OK and not arguments.verbose:
+            continue
+        print(test.result)
+
+    print(f"[====] Synthesis: Tested: {len(arguments.tests)}"
+        + f" | Passing: {okTests} | Failing: {koTests} | Crashing: {crashTests}")
+    return (koTests, crashTests)
+
 def printUsage(exitCode):
     """
     Prints the usage of the script
@@ -240,9 +284,12 @@ def main():
         printError(arguments.errorString, arguments.exitCode)
         | Passing: {result.count(State.OK)}\
         | Failing: {result.count(State.KO)}\
-        | Crashing: {result.count(State.CRASH)}")
+    (koTests, crashedTests) = printResults(arguments)
     generateFile(result)
     return 0
+    if koTests > 0 or crashedTests > 0:
+        exit(Error.ERROR.value)
+    exit(0)
 
 if __name__ == "__main__":
     main()
