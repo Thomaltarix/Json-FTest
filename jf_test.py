@@ -170,7 +170,7 @@ def runTest(test):
     test.returnCode = process.returncode
     setResult(test)
 
-def generateFile(result):
+def generateFile(arguments):
     """
     Generates a .xml file with the results of the tests.
     The file will be named f_test.xml
@@ -179,12 +179,15 @@ def generateFile(result):
     The script do not handle the elapsed time of the tests
     """
 
-    test_cases = []
-    for i, test in enumerate(tests):
-        test_cases.append(TestCase(test["testName"], classname="", stdout=result[i].name, stderr="", elapsed_sec=0.0, status=result[i].name))
-    test_suite = [TestSuite("nanotekspice", test_cases)]
-    with open("f_test.xml", "w") as f:
-        TestSuite.to_file(f, test_suite)
+    testCases = []
+    for i in range(len(arguments.tests)):
+        testCases.append(TestCase(arguments.tests[i].testName, classname="",
+        stdout=arguments.tests[i].stdout, stderr=arguments.tests[i].stderr,
+        elapsed_sec=0.0, status=arguments.tests[i].result))
+    testSuite = TestSuite("jf_test", testCases)
+    with open("jf_test.xml", "w") as file:
+        TestSuite.to_file(file, [testSuite], prettyprint=True)
+
 def createTest(test):
     """
     Creates a Test object from a dictionary
@@ -303,7 +306,7 @@ def main():
     for i in range(len(arguments.tests)):
         runTest(arguments.tests[i])
     (koTests, crashedTests) = printResults(arguments)
-    generateFile(result)
+    generateFile(arguments)
     return 0
     if koTests > 0 or crashedTests > 0:
         exit(Error.ERROR.value)
