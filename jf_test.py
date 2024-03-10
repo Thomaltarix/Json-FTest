@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from subprocess import Popen, PIPE
 from enum import Enum
 import os
