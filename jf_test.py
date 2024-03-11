@@ -189,14 +189,16 @@ def generateFile(arguments):
 
     if arguments.delete:
         return
-    testCases = []
-    for i in range(len(arguments.tests)):
-        testCases.append(TestCase(arguments.tests[i].testName, classname="",
-        stdout=arguments.tests[i].stdout, stderr=arguments.tests[i].stderr,
-        elapsed_sec=0.0, status=arguments.tests[i].result))
-    testSuite = TestSuite("jf_test", testCases)
+    testSuite = []
+    for testArray in arguments.tests.items():
+        testCases = []
+        for test in testArray[1]:
+            testCases.append(TestCase(test.testName, classname="",
+            stdout=test.stdout, stderr=test.stderr,
+            elapsed_sec=0.0, status=test.state))
+        testSuite.append(TestSuite(testArray[0], testCases))
     with open("jf_test.xml", "w") as file:
-        TestSuite.to_file(file, [testSuite], prettyprint=True)
+        TestSuite.to_file(file, testSuite, prettyprint=True)
 
 def deleteFile(arguments):
     """
