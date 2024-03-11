@@ -32,10 +32,9 @@ class Test:
     Class to represent a test
     """
 
-    def __init__(self, testName, binaryPath, fileInput, arguments, commandLineInputs, expectedReturnCode, expectedStdoutOutput, expectedStderrOutput):
+    def __init__(self, testName, binaryPath, arguments, commandLineInputs, expectedReturnCode, expectedStdoutOutput, expectedStderrOutput):
         self.testName = testName
         self.binaryPath = binaryPath
-        self.fileInput = fileInput
         self.arguments = arguments
         self.commandLineInputs = commandLineInputs
         self.expectedReturnCode = expectedReturnCode
@@ -93,7 +92,6 @@ options = [
 testKeys = [
     "testName",
     "binaryPath",
-    "fileInput",
     "arguments",
     "commandLineInputs",
     "expectedReturnCode",
@@ -143,8 +141,6 @@ def runTest(test):
     """
 
     commandLine = [test.binaryPath]
-    if test.fileInput:
-        commandLine.append(test.fileInput)
     if test.arguments:
         commandLine.extend(test.arguments)
     process = Popen(commandLine,
@@ -198,7 +194,6 @@ def createTest(test):
     return Test(
         test["testName"],
         test["binaryPath"],
-        test["fileInput"],
         test["arguments"],
         test["commandLineInputs"],
         test["expectedReturnCode"],
