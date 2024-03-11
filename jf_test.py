@@ -148,6 +148,10 @@ def runTest(test):
                     stderr=PIPE,
                     stdin=PIPE,
                     universal_newlines=True)
+    except FileNotFoundError:
+        test.state = State.CRASH
+        test.result = f"Test \"{test.testName}\" failed: The binary path \"{test.binaryPath}\" is invalid"
+        return
     while process.poll() is None:
         for clInput in test.commandLineInputs:
             if clInput[len(clInput) - 1] != '\n':
@@ -215,6 +219,8 @@ def parseTest(arguments, filePath):
     """
 
     try:
+        if (filePath[0] == '-'):
+            raise ValueError
         with open(filePath, "r") as file:
             arguments.tests[path.basename(filePath)] = []
             data = load(file)
@@ -222,6 +228,8 @@ def parseTest(arguments, filePath):
                 arguments.tests[path.basename(filePath)].append(createTest(test))
     except FileNotFoundError:
         arguments.setError(f"File {filePath} not found")
+    except ValueError:
+        arguments.setError(f"Invalid option {filePath}")
 
 def parseArgs(arguments, argv):
     """
@@ -306,7 +314,8 @@ def main():
 
     arguments = Arguments()
     parseArgs(arguments, argv)
-
+    if len(argv) == 1:
+        return
     if arguments.help:
         printUsage(arguments.exitCode)
     if arguments.error:
