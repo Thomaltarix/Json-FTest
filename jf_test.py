@@ -140,8 +140,10 @@ def runTest(test):
     commandLine = [test.binaryPath]
     if test.arguments:
         commandLine.extend(test.arguments)
-    process = Popen(commandLine,
-                    cwd=os.getcwd(),
+    try:
+        # subprocess.run
+        process = Popen(commandLine,
+                    cwd=getcwd(),
                     stdout=PIPE,
                     stderr=PIPE,
                     stdin=PIPE,
