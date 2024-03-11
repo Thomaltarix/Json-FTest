@@ -4,8 +4,8 @@ from subprocess import Popen, PIPE
 from enum import Enum
 from sys import argv
 from junit_xml import TestSuite, TestCase
-import os
-import json
+from os import path, remove, getcwd
+from json import load
 
 class State(Enum):
     """
