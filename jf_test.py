@@ -57,7 +57,7 @@ class Arguments:
         self.delete = False
         self.error = False
         self.exitCode = 0
-        self.tests = []
+        self.tests = {}
         self.errorString = ""
 
     def setHelp(self):
@@ -166,6 +166,15 @@ def runTest(test):
     test.returnCode = process.returncode
     setResult(test)
 
+def runTests(arguments):
+    """
+    Runs every test in every test files
+    """
+
+    for testArray in arguments.tests.items():
+        for test in testArray[1]:
+            runTest(test)
+
 def generateFile(arguments):
     """
     Generates a .xml file with the results of the tests.
@@ -208,9 +217,10 @@ def parseTest(arguments, filePath):
 
     try:
         with open(filePath, "r") as file:
-            data = json.load(file)
+            arguments.tests[path.basename(filePath)] = []
+            data = load(file)
             for test in data:
-                arguments.addTest(createTest(test))
+                arguments.tests[path.basename(filePath)].append(createTest(test))
     except FileNotFoundError:
         arguments.setError(f"File {filePath} not found")
 
@@ -236,22 +246,25 @@ def printResults(arguments):
     Prints the results of the tests
     """
 
-    koTests, crashTests, okTests = 0, 0, 0
+    koTests, crashTests, okTests, testNb = 0, 0, 0, 0
 
-    for test in arguments.tests:
-        if test.state == State.KO:
-            koTests += 1
-        elif test.state == State.CRASH:
-            crashTests += 1
+    for testArray in arguments.tests.values():
+        for test in testArray:
+            testNb += 1
+            if test.state == State.KO:
+                koTests += 1
+            if test.state == State.CRASH:
+                crashTests += 1
+            if test.state == State.OK:
+                okTests += 1
+            if test.state == State.OK and not arguments.verbose:
+                continue
+            print(test.result)
 
     if koTests > 0 or crashTests > 0:
         arguments.exitCode = Error.ERROR
-    for test in arguments.tests:
-        if test.state == State.OK and not arguments.verbose:
-            continue
-        print(test.result)
 
-    print(f"[====] Synthesis: Tested: {len(arguments.tests)}"
+    print(f"[====] Synthesis: Tested: {testNb}"
         + f" | Passing: {okTests} | Failing: {koTests} | Crashing: {crashTests}")
     return (koTests, crashTests)
 
@@ -300,7 +313,7 @@ def main():
         printUsage(arguments.exitCode)
     if arguments.error:
         printError(arguments.errorString, arguments.exitCode)
-    for i in range(len(arguments.tests)):
+    runTests(arguments)
         runTest(arguments.tests[i])
     (koTests, crashedTests) = printResults(arguments)
     generateFile(arguments)
