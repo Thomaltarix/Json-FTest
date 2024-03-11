@@ -273,23 +273,22 @@ def printUsage(exitCode):
     """
 
     print("Usage:\n\
-        ./jf_test.py [options] [test_file.json]\n\
+        ./jf_test.py [options] [test_files.json] ...\n\
         \n\tOptions:\n\
         \t--help, -h: Display this help\n\
-        \t--verbose, -v: Display the result of each test\n\
+        \t--verbose, -v: Display the result of passed tests\n\
         \t--delete, -d: Do not generate the .xml file and delete it if it exists\n\
         \n\tTest files:\n\
-        \tThe test files must be a .json file\n\
-        \tThe test files must contain an array of tests\n\
+        \tTest files must be a .json files\n\
+        \tTest files must contain an array of tests\n\
         \tEach test must contain the following keys:\n\
         \t\ttestName: The name of the test\n\
         \t\tbinaryPath: The path to the binary to test\n\
-        \t\tfileInput: The path to the file to use as input\n\
         \t\targuments: An array of arguments to pass to the binary\n\
         \t\tcommandLineInputs: An array of command line inputs\n\
-        \t\texpectedReturnCode: The expected return code of the binary\n\
-        \t\texpectedStdoutOutput: The expected stdout output of the binary\n\
-        \t\texpectedStderrOutput: The expected stderr output of the binary")
+        \t\texpectedReturnCode: The expected return code of the program\n\
+        \t\texpectedStdoutOutput: The expected stdout output of the program\n\
+        \t\texpectedStderrOutput: The expected stderr output of the program")
     exit(exitCode.value)
 
 def printError(errorString, exitCode):
