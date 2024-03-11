@@ -4,8 +4,8 @@ from subprocess import Popen, PIPE
 from enum import Enum
 from sys import argv
 from junit_xml import TestSuite, TestCase
-import os
-import json
+from os import path, remove, getcwd
+from json import load
 
 class State(Enum):
     """
@@ -32,10 +32,9 @@ class Test:
     Class to represent a test
     """
 
-    def __init__(self, testName, binaryPath, fileInput, arguments, commandLineInputs, expectedReturnCode, expectedStdoutOutput, expectedStderrOutput):
+    def __init__(self, testName, binaryPath, arguments, commandLineInputs, expectedReturnCode, expectedStdoutOutput, expectedStderrOutput):
         self.testName = testName
         self.binaryPath = binaryPath
-        self.fileInput = fileInput
         self.arguments = arguments
         self.commandLineInputs = commandLineInputs
         self.expectedReturnCode = expectedReturnCode
@@ -58,7 +57,7 @@ class Arguments:
         self.delete = False
         self.error = False
         self.exitCode = 0
-        self.tests = []
+        self.tests = {}
         self.errorString = ""
 
     def setHelp(self):
@@ -93,7 +92,6 @@ options = [
 testKeys = [
     "testName",
     "binaryPath",
-    "fileInput",
     "arguments",
     "commandLineInputs",
     "expectedReturnCode",
@@ -106,9 +104,6 @@ def setResult(test):
     Sets the result of a test
     The result contains the state of the test and the result of the test
     """
-
-    if test.stdout == " Hello World\n":
-        print("test")
 
     if test.returnCode == 139:
         test.state = State.CRASH
@@ -143,16 +138,20 @@ def runTest(test):
     """
 
     commandLine = [test.binaryPath]
-    if test.fileInput:
-        commandLine.append(test.fileInput)
     if test.arguments:
         commandLine.extend(test.arguments)
-    process = Popen(commandLine,
-                    cwd=os.getcwd(),
+    try:
+        # subprocess.run
+        process = Popen(commandLine,
+                    cwd=getcwd(),
                     stdout=PIPE,
                     stderr=PIPE,
                     stdin=PIPE,
                     universal_newlines=True)
+    except FileNotFoundError:
+        test.state = State.CRASH
+        test.result = f"Test \"{test.testName}\" failed: The binary path \"{test.binaryPath}\" is invalid"
+        return
     while process.poll() is None:
         for clInput in test.commandLineInputs:
             if clInput[len(clInput) - 1] != '\n':
@@ -170,6 +169,15 @@ def runTest(test):
     test.returnCode = process.returncode
     setResult(test)
 
+def runTests(arguments):
+    """
+    Runs every test in every test files
+    """
+
+    for testArray in arguments.tests.items():
+        for test in testArray[1]:
+            runTest(test)
+
 def generateFile(arguments):
     """
     Generates a .xml file with the results of the tests.
@@ -181,14 +189,25 @@ def generateFile(arguments):
 
     if arguments.delete:
         return
-    testCases = []
-    for i in range(len(arguments.tests)):
-        testCases.append(TestCase(arguments.tests[i].testName, classname="",
-        stdout=arguments.tests[i].stdout, stderr=arguments.tests[i].stderr,
-        elapsed_sec=0.0, status=arguments.tests[i].result))
-    testSuite = TestSuite("jf_test", testCases)
+    testSuite = []
+    for testArray in arguments.tests.items():
+        testCases = []
+        for test in testArray[1]:
+            testCases.append(TestCase(test.testName, classname="",
+            stdout=test.stdout, stderr=test.stderr,
+            elapsed_sec=0.0, status=test.state))
+        testSuite.append(TestSuite(testArray[0], testCases))
     with open("jf_test.xml", "w") as file:
-        TestSuite.to_file(file, [testSuite], prettyprint=True)
+        TestSuite.to_file(file, testSuite, prettyprint=True)
+
+def deleteFile(arguments):
+    """
+    Deletes the .xml file if the --delete/-d option is on
+    """
+
+    if arguments.delete:
+        if path.exists("jf_test.xml"):
+            remove("jf_test.xml")
 
 def createTest(test):
     """
@@ -198,7 +217,6 @@ def createTest(test):
     return Test(
         test["testName"],
         test["binaryPath"],
-        test["fileInput"],
         test["arguments"],
         test["commandLineInputs"],
         test["expectedReturnCode"],
@@ -212,12 +230,17 @@ def parseTest(arguments, filePath):
     """
 
     try:
+        if (filePath[0] == '-'):
+            raise ValueError
         with open(filePath, "r") as file:
-            data = json.load(file)
+            arguments.tests[path.basename(filePath)] = []
+            data = load(file)
             for test in data:
-                arguments.addTest(createTest(test))
+                arguments.tests[path.basename(filePath)].append(createTest(test))
     except FileNotFoundError:
         arguments.setError(f"File {filePath} not found")
+    except ValueError:
+        arguments.setError(f"Invalid option {filePath}")
 
 def parseArgs(arguments, argv):
     """
@@ -241,22 +264,25 @@ def printResults(arguments):
     Prints the results of the tests
     """
 
-    koTests, crashTests, okTests = 0, 0, 0
+    koTests, crashTests, okTests, testNb = 0, 0, 0, 0
 
-    for test in arguments.tests:
-        if test.state == State.KO:
-            koTests += 1
-        elif test.state == State.CRASH:
-            crashTests += 1
+    for testArray in arguments.tests.values():
+        for test in testArray:
+            testNb += 1
+            if test.state == State.KO:
+                koTests += 1
+            if test.state == State.CRASH:
+                crashTests += 1
+            if test.state == State.OK:
+                okTests += 1
+            if test.state == State.OK and not arguments.verbose:
+                continue
+            print(test.result)
 
     if koTests > 0 or crashTests > 0:
         arguments.exitCode = Error.ERROR
-    for test in arguments.tests:
-        if test.state == State.OK and not arguments.verbose:
-            continue
-        print(test.result)
 
-    print(f"[====] Synthesis: Tested: {len(arguments.tests)}"
+    print(f"[====] Synthesis: Tested: {testNb}"
         + f" | Passing: {okTests} | Failing: {koTests} | Crashing: {crashTests}")
     return (koTests, crashTests)
 
@@ -266,23 +292,22 @@ def printUsage(exitCode):
     """
 
     print("Usage:\n\
-        ./jf_test.py [options] [test_file.json]\n\
+        ./jf_test.py [options] [test_files.json] ...\n\
         \n\tOptions:\n\
         \t--help, -h: Display this help\n\
-        \t--verbose, -v: Display the result of each test\n\
+        \t--verbose, -v: Display the result of passed tests\n\
         \t--delete, -d: Do not generate the .xml file and delete it if it exists\n\
         \n\tTest files:\n\
-        \tThe test files must be a .json file\n\
-        \tThe test files must contain an array of tests\n\
+        \tTest files must be a .json files\n\
+        \tTest files must contain an array of tests\n\
         \tEach test must contain the following keys:\n\
         \t\ttestName: The name of the test\n\
         \t\tbinaryPath: The path to the binary to test\n\
-        \t\tfileInput: The path to the file to use as input\n\
         \t\targuments: An array of arguments to pass to the binary\n\
         \t\tcommandLineInputs: An array of command line inputs\n\
-        \t\texpectedReturnCode: The expected return code of the binary\n\
-        \t\texpectedStdoutOutput: The expected stdout output of the binary\n\
-        \t\texpectedStderrOutput: The expected stderr output of the binary")
+        \t\texpectedReturnCode: The expected return code of the program\n\
+        \t\texpectedStdoutOutput: The expected stdout output of the program\n\
+        \t\texpectedStderrOutput: The expected stderr output of the program")
     exit(exitCode.value)
 
 def printError(errorString, exitCode):
@@ -300,18 +325,16 @@ def main():
 
     arguments = Arguments()
     parseArgs(arguments, argv)
-
+    if len(argv) == 1:
+        return
     if arguments.help:
         printUsage(arguments.exitCode)
     if arguments.error:
         printError(arguments.errorString, arguments.exitCode)
-    for i in range(len(arguments.tests)):
-        runTest(arguments.tests[i])
+    runTests(arguments)
     (koTests, crashedTests) = printResults(arguments)
     generateFile(arguments)
-    if arguments.delete:
-        if os.path.exists("jf_test.xml"):
-            os.remove("jf_test.xml")
+    deleteFile(arguments)
     if koTests > 0 or crashedTests > 0:
         exit(Error.ERROR.value)
     exit(0)
