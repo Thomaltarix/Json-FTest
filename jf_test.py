@@ -105,9 +105,6 @@ def setResult(test):
     The result contains the state of the test and the result of the test
     """
 
-    if test.stdout == " Hello World\n":
-        print("test")
-
     if test.returnCode == 139:
         test.state = State.CRASH
         test.result = f"Test \"{test.testName}\" failed: the program crashed with signal {test.returnCode}"
