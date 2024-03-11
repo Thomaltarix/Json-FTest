@@ -321,7 +321,6 @@ def main():
     if arguments.error:
         printError(arguments.errorString, arguments.exitCode)
     runTests(arguments)
-        runTest(arguments.tests[i])
     (koTests, crashedTests) = printResults(arguments)
     generateFile(arguments)
     if arguments.delete:
