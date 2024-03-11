@@ -198,6 +198,15 @@ def generateFile(arguments):
     with open("jf_test.xml", "w") as file:
         TestSuite.to_file(file, [testSuite], prettyprint=True)
 
+def deleteFile(arguments):
+    """
+    Deletes the .xml file if the --delete/-d option is on
+    """
+
+    if arguments.delete:
+        if path.exists("jf_test.xml"):
+            remove("jf_test.xml")
+
 def createTest(test):
     """
     Creates a Test object from a dictionary
@@ -323,9 +332,7 @@ def main():
     runTests(arguments)
     (koTests, crashedTests) = printResults(arguments)
     generateFile(arguments)
-    if arguments.delete:
-        if os.path.exists("jf_test.xml"):
-            os.remove("jf_test.xml")
+    deleteFile(arguments)
     if koTests > 0 or crashedTests > 0:
         exit(Error.ERROR.value)
     exit(0)
