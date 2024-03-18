@@ -1,6 +1,6 @@
-# F-Test
+# Json-FTest
 
-F-Test is a Python script designed for testing executable files with specified arguments or by providing command line inputs. It is also Jenkins-compatible, allowing the generation of JUnit XML reports.
+Json-FTest is a Python script designed for testing executable files with specified arguments or by providing command line inputs. It is also Jenkins-compatible, allowing the generation of JUnit XML reports.
 
 ## Features
 
@@ -13,7 +13,7 @@ F-Test is a Python script designed for testing executable files with specified a
 ## Usage
 
 ```bash
-python f_test.py [options]
+python json-ftest.py [options]
 ```
 
 ## Future Enhancements

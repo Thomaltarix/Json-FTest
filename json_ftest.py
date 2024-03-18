@@ -197,7 +197,7 @@ def generateFile(arguments):
             stdout=test.stdout, stderr=test.stderr,
             elapsed_sec=0.0, status=test.state))
         testSuite.append(TestSuite(testArray[0], testCases))
-    with open("jf_test.xml", "w") as file:
+    with open("json_ftest.xml", "w") as file:
         TestSuite.to_file(file, testSuite, prettyprint=True)
 
 def deleteFile(arguments):
@@ -206,8 +206,8 @@ def deleteFile(arguments):
     """
 
     if arguments.delete:
-        if path.exists("jf_test.xml"):
-            remove("jf_test.xml")
+        if path.exists("json_ftest.xml"):
+            remove("json_ftest.xml")
 
 def createTest(test):
     """
@@ -292,7 +292,7 @@ def printUsage(exitCode):
     """
 
     print("Usage:\n\
-        ./jf_test.py [options] [test_files.json] ...\n\
+        ./json_ftest.py [options] [test_files.json] ...\n\
         \n\tOptions:\n\
         \t--help, -h: Display this help\n\
         \t--verbose, -v: Display the result of passed tests\n\
