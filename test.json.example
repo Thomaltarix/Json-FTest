@@ -1,0 +1,11 @@
+[
+    {
+        "testName": "Test 0.0",
+        "binaryPath": "echo",
+        "arguments": ["Hello World"],
+        "commandLineInputs": [],
+        "expectedReturnCode": 0,
+        "expectedStdoutOutput": "Hello World\n",
+        "expectedStderrOutput": ""
+    }
+]

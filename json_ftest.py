@@ -6,6 +6,7 @@ from sys import argv
 from junit_xml import TestSuite, TestCase
 from os import path, remove, getcwd
 from json import load
+import time
 
 class State(Enum):
     """
@@ -107,23 +108,80 @@ def setResult(test):
 
     if test.returnCode == 139:
         test.state = State.CRASH
-        test.result = f"Test \"{test.testName}\" failed: the program crashed with signal {test.returnCode}"
+        test.result = f"Test \"{test.testName}\" failed, the program crashed with signal {test.returnCode}"
     elif test.stdout != test.expectedStdoutOutput:
         test.state = State.KO
-        test.result = f"Test \"{test.testName}\" failed: Expected output is:\
-        \n{test.expectedStdoutOutput}\nActual output is: \n{test.stdout}"
+        test.result = f"Test \"{test.testName}\" failed, expected output is:\n{test.expectedStdoutOutput}Actual output is:\n{test.stdout}"
     elif test.stderr != test.expectedStderrOutput:
         test.state = State.KO
-        test.result = f"Test \"{test.testName}\" failed: Expected error output is:\
-        \n{test.expectedStderrOutput}\nActual error output is: \n{test.stderr}"
+        test.result = f"Test \"{test.testName}\" failed, expected error output is:\
+        \n{test.expectedStderrOutput}Actual error output is:\n{test.stderr}"
     else:
         if test.returnCode != test.expectedReturnCode:
             test.state = State.KO
-            test.result = f"Test \"{test.testName}\" failed: Expected return code is:\
-            {test.expectedReturnCode}, Actual return code is: {test.returnCode}"
+            test.result = f"Test \"{test.testName}\" failed, expected return code is: {test.expectedReturnCode}, Actual return code is: {test.returnCode}"
         else:
             test.state = State.OK
             test.result = f"Test \"{test.testName}\" passed"
+
+def openCommand(commandLine):
+    """
+    Opens a command line input
+    """
+
+    try:
+        return Popen(commandLine,
+            cwd=getcwd(),
+            stdout=PIPE,
+            stderr=PIPE,
+            stdin=PIPE,
+            universal_newlines=True)
+    except FileNotFoundError:
+        return None
+
+def handleProcess(test, process, start):
+    """
+    Handles the process of the test
+    """
+
+    while process.poll() is None:
+        for clInput in test.commandLineInputs:
+            if clInput[len(clInput) - 1] != '\n':
+                clInput += '\n'
+            process.stdin.write(clInput)
+        newTime = time.time()
+        if newTime - start > 1 * 60:
+            process.kill()
+            test.state = State.CRASH
+            test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
+            return
+        process.stdin.flush()
+        while (child_output := process.stdout.readline()) != "":
+            newTime = time.time()
+            if newTime - start > 1 * 60:
+                process.kill()
+                test.state = State.CRASH
+                test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
+                return
+            test.stdout += child_output
+        while (child_error := process.stderr.readline()) != "":
+            newTime = time.time()
+            if newTime - start > 1 * 60:
+                process.kill()
+                test.state = State.CRASH
+                test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
+                return
+            test.stderr += child_error
+
+def closeFileDescriptors(process):
+    """
+    Closes the file descriptors of the process
+    """
+
+    process.stdin.close()
+    process.stdout.close()
+    process.stderr.close()
+
 
 def runTest(test):
     """
@@ -140,32 +198,14 @@ def runTest(test):
     commandLine = [test.binaryPath]
     if test.arguments:
         commandLine.extend(test.arguments)
-    try:
-        # subprocess.run
-        process = Popen(commandLine,
-                    cwd=getcwd(),
-                    stdout=PIPE,
-                    stderr=PIPE,
-                    stdin=PIPE,
-                    universal_newlines=True)
-    except FileNotFoundError:
+    start = time.time()
+    process = openCommand(commandLine)
+    if process is None:
         test.state = State.CRASH
         test.result = f"Test \"{test.testName}\" failed: The binary path \"{test.binaryPath}\" is invalid"
         return
-    while process.poll() is None:
-        for clInput in test.commandLineInputs:
-            if clInput[len(clInput) - 1] != '\n':
-                clInput += '\n'
-            process.stdin.write(clInput)
-        process.stdin.flush()
-        child_output = process.stdout.readline()
-        test.stdout += child_output
-        child_error = process.stderr.readline()
-        test.stderr += child_error
-
-    process.stdin.close()
-    process.stdout.close()
-    process.stderr.close()
+    handleProcess(test, process, start)
+    closeFileDescriptors(process)
     test.returnCode = process.returncode
     setResult(test)
 
