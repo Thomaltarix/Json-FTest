@@ -6,6 +6,7 @@ from sys import argv
 from junit_xml import TestSuite, TestCase
 from os import path, remove, getcwd
 from json import load
+import time
 
 class State(Enum):
     """
@@ -140,6 +141,24 @@ def openCommand(commandLine):
     except FileNotFoundError:
         return None
 
+        newTime = time.time()
+        if newTime - start > 1 * 60:
+            process.kill()
+            test.state = State.CRASH
+            test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
+            return
+            newTime = time.time()
+            if newTime - start > 1 * 60:
+                process.kill()
+                test.state = State.CRASH
+                test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
+                return
+            newTime = time.time()
+            if newTime - start > 1 * 60:
+                process.kill()
+                test.state = State.CRASH
+                test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
+                return
 def closeFileDescriptors(process):
     """
     Closes the file descriptors of the process
