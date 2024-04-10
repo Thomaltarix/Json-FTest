@@ -139,24 +139,40 @@ def openCommand(commandLine):
     except FileNotFoundError:
         return None
 
+def handleProcess(test, process, start):
+    """
+    Handles the process of the test
+    """
+
+    while process.poll() is None:
+        for clInput in test.commandLineInputs:
+            if clInput[len(clInput) - 1] != '\n':
+                clInput += '\n'
+            process.stdin.write(clInput)
         newTime = time.time()
         if newTime - start > 1 * 60:
             process.kill()
             test.state = State.CRASH
             test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
             return
+        process.stdin.flush()
+        while (child_output := process.stdout.readline()) != "":
             newTime = time.time()
             if newTime - start > 1 * 60:
                 process.kill()
                 test.state = State.CRASH
                 test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
                 return
+            test.stdout += child_output
+        while (child_error := process.stderr.readline()) != "":
             newTime = time.time()
             if newTime - start > 1 * 60:
                 process.kill()
                 test.state = State.CRASH
                 test.result = f"Test \"{test.testName}\" failed: The program took more than 5 minutes to execute"
                 return
+            test.stderr += child_error
+
 def closeFileDescriptors(process):
     """
     Closes the file descriptors of the process
@@ -188,17 +204,8 @@ def runTest(test):
         test.state = State.CRASH
         test.result = f"Test \"{test.testName}\" failed: The binary path \"{test.binaryPath}\" is invalid"
         return
-    while process.poll() is None:
+    handleProcess(test, process, start)
     closeFileDescriptors(process)
-            if clInput[len(clInput) - 1] != '\n':
-                clInput += '\n'
-            process.stdin.write(clInput)
-        process.stdin.flush()
-        child_output = process.stdout.readline()
-        test.stdout += child_output
-        child_error = process.stderr.readline()
-        test.stderr += child_error
-
     test.returnCode = process.returncode
     setResult(test)
 
