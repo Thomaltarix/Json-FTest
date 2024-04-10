@@ -108,20 +108,18 @@ def setResult(test):
 
     if test.returnCode == 139:
         test.state = State.CRASH
-        test.result = f"Test \"{test.testName}\" failed: the program crashed with signal {test.returnCode}"
+        test.result = f"Test \"{test.testName}\" failed, the program crashed with signal {test.returnCode}"
     elif test.stdout != test.expectedStdoutOutput:
         test.state = State.KO
-        test.result = f"Test \"{test.testName}\" failed: Expected output is:\
-        \n{test.expectedStdoutOutput}\nActual output is: \n{test.stdout}"
+        test.result = f"Test \"{test.testName}\" failed, expected output is:\n{test.expectedStdoutOutput}Actual output is:\n{test.stdout}"
     elif test.stderr != test.expectedStderrOutput:
         test.state = State.KO
-        test.result = f"Test \"{test.testName}\" failed: Expected error output is:\
-        \n{test.expectedStderrOutput}\nActual error output is: \n{test.stderr}"
+        test.result = f"Test \"{test.testName}\" failed, expected error output is:\
+        \n{test.expectedStderrOutput}Actual error output is:\n{test.stderr}"
     else:
         if test.returnCode != test.expectedReturnCode:
             test.state = State.KO
-            test.result = f"Test \"{test.testName}\" failed: Expected return code is:\
-            {test.expectedReturnCode}, Actual return code is: {test.returnCode}"
+            test.result = f"Test \"{test.testName}\" failed, expected return code is: {test.expectedReturnCode}, Actual return code is: {test.returnCode}"
         else:
             test.state = State.OK
             test.result = f"Test \"{test.testName}\" passed"
