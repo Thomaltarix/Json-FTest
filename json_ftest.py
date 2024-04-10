@@ -125,6 +125,31 @@ def setResult(test):
             test.state = State.OK
             test.result = f"Test \"{test.testName}\" passed"
 
+def openCommand(commandLine):
+    """
+    Opens a command line input
+    """
+
+    try:
+        return Popen(commandLine,
+            cwd=getcwd(),
+            stdout=PIPE,
+            stderr=PIPE,
+            stdin=PIPE,
+            universal_newlines=True)
+    except FileNotFoundError:
+        return None
+
+def closeFileDescriptors(process):
+    """
+    Closes the file descriptors of the process
+    """
+
+    process.stdin.close()
+    process.stdout.close()
+    process.stderr.close()
+
+
 def runTest(test):
     """
     Runs a given command with given arguments and returns the result
@@ -140,20 +165,14 @@ def runTest(test):
     commandLine = [test.binaryPath]
     if test.arguments:
         commandLine.extend(test.arguments)
-    try:
-        # subprocess.run
-        process = Popen(commandLine,
-                    cwd=getcwd(),
-                    stdout=PIPE,
-                    stderr=PIPE,
-                    stdin=PIPE,
-                    universal_newlines=True)
-    except FileNotFoundError:
+    start = time.time()
+    process = openCommand(commandLine)
+    if process is None:
         test.state = State.CRASH
         test.result = f"Test \"{test.testName}\" failed: The binary path \"{test.binaryPath}\" is invalid"
         return
     while process.poll() is None:
-        for clInput in test.commandLineInputs:
+    closeFileDescriptors(process)
             if clInput[len(clInput) - 1] != '\n':
                 clInput += '\n'
             process.stdin.write(clInput)
@@ -163,9 +182,6 @@ def runTest(test):
         child_error = process.stderr.readline()
         test.stderr += child_error
 
-    process.stdin.close()
-    process.stdout.close()
-    process.stderr.close()
     test.returnCode = process.returncode
     setResult(test)
 
