@@ -106,6 +106,14 @@ def setResult(test):
     The result contains the state of the test and the result of the test
     """
 
+    try:
+        with open(test.expectedStdoutOutput, "r") as file:
+            test.expectedStdoutOutput = file.read()
+        with open(test.expectedStderrOutput, "r") as file:
+            test.expectedStderrOutput = file.read()
+    except:
+        pass
+
     if test.returnCode == 139:
         test.state = State.CRASH
         test.result = f"Test \"{test.testName}\" failed, the program crashed with signal {test.returnCode}"
